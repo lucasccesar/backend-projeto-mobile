@@ -1,11 +1,13 @@
 package br.com.bookly.services.impl;
 
 import br.com.bookly.entities.BookClub;
+import br.com.bookly.entities.ParticipantUser;
 import br.com.bookly.exceptions.BadRequestException;
 import br.com.bookly.exceptions.ExistentBookClubException;
 import br.com.bookly.exceptions.InexistentBookClubException;
 import br.com.bookly.repositories.BookClubRepository;
 import br.com.bookly.services.BookClubService;
+import br.com.bookly.services.ParticipantUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.data.domain.Page;
@@ -20,6 +22,9 @@ public class BookClubServiceImpl implements BookClubService {
 
     @Autowired
     BookClubRepository bookClubRepository;
+
+    @Autowired
+    ParticipantUserService participantUserService;
 
     @Override
     public BookClub createBookClub(BookClub bookClub) {
@@ -42,7 +47,15 @@ public class BookClubServiceImpl implements BookClubService {
             throw new ExistentBookClubException("Error: BookClub already exists, try another name!");
         }
 
-        return bookClubRepository.save(bookClub);
+        BookClub saved = bookClubRepository.save(bookClub);
+
+        if (saved.getCreator() != null) {
+            ParticipantUser participant = new ParticipantUser();
+            participant.setUser(saved.getCreator());
+            participant.setClub(saved);
+            participantUserService.createParticipantUser(participant);
+        }
+        return saved;
     }
 
     @Override

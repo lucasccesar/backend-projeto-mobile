@@ -36,7 +36,7 @@ public class BookClub { // clube_do_livro
     private String description;
 
     // Relação de clubeDoLivro com LivroClube (ClubBook)
-    @OneToMany(mappedBy = "bookClub", cascade = CascadeType.ALL, orphanRemoval = true) //COMPARAR!!!!
+    @OneToMany(mappedBy = "bookClub", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BookClubAssignment> MensalBooks = new ArrayList<>();
 
     // Relação ClubeDoLivro com MensagemClube (ClubMessage)
@@ -46,4 +46,8 @@ public class BookClub { // clube_do_livro
     // Relação ClubeDoLivro com UsuariosParticipantes (ParticipantUser)
     @OneToMany(mappedBy = "club", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ParticipantUser> UsersParticipants = new ArrayList<>();
+
+    @ManyToOne
+    @JoinColumn(name = "id_criador")
+    private Users creator;
 }
