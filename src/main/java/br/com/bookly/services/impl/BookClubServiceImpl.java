@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -26,9 +27,10 @@ public class BookClubServiceImpl implements BookClubService {
     @Autowired
     ParticipantUserService participantUserService;
 
+    private static final List<String> VALID_FREQUENCIES = List.of("SEMANAL", "QUINZENAL", "MENSAL");
+
     @Override
     public BookClub createBookClub(BookClub bookClub) {
-
         if (bookClub.getName() == null || bookClub.getName().isBlank()) {
             throw new BadRequestException("Error: BookClub name is required");
         }
@@ -37,12 +39,15 @@ public class BookClubServiceImpl implements BookClubService {
             throw new BadRequestException("Error: BookClub theme is required");
         }
 
-        // descrição não obrigatoria seta como vazio
         if (bookClub.getDescription() == null || bookClub.getDescription().isBlank()) {
             bookClub.setDescription("");
         }
 
-        // verifica se já tem um clube com o mesmo nome
+        if (bookClub.getFrequency() == null || !VALID_FREQUENCIES.contains(bookClub.getFrequency().toUpperCase())) {
+            throw new BadRequestException("Error: Frequency is required and must be SEMANAL, QUINZENAL or MENSAL");
+        }
+        bookClub.setFrequency(bookClub.getFrequency().toUpperCase());
+
         if (bookClubRepository.existsByNameIgnoreCase(bookClub.getName())) {
             throw new ExistentBookClubException("Error: BookClub already exists, try another name!");
         }
@@ -55,6 +60,7 @@ public class BookClubServiceImpl implements BookClubService {
             participant.setClub(saved);
             participantUserService.createParticipantUser(participant);
         }
+
         return saved;
     }
 

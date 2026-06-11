@@ -1,17 +1,24 @@
 package br.com.bookly.services.impl;
 
+import br.com.bookly.entities.Book;
+import br.com.bookly.entities.BookClub;
 import br.com.bookly.entities.BookClubAssignment;
+import br.com.bookly.entities.dtos.BookClubAssignmentBatchDTO;
 import br.com.bookly.exceptions.BadRequestException;
 import br.com.bookly.exceptions.ExistentBookClubAssignmentException;
 import br.com.bookly.exceptions.InexistentBookClubAssignmentException;
 import br.com.bookly.exceptions.invalidDateException;
 import br.com.bookly.repositories.BookClubAssignmentRepository;
+import br.com.bookly.repositories.BookClubRepository;
 import br.com.bookly.services.BookClubAssignmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -20,6 +27,8 @@ public class BookClubAssignmentServiceImpl implements BookClubAssignmentService 
     @Autowired
     BookClubAssignmentRepository bookClubAssignmentRepository;
 
+    @Autowired
+    BookClubRepository bookClubRepository;
 
     @Override
     public BookClubAssignment createBookClubAssignment(BookClubAssignment bookClubAssignment) {
@@ -123,5 +132,79 @@ public class BookClubAssignmentServiceImpl implements BookClubAssignmentService 
             throw new InexistentBookClubAssignmentException("Error: No assignments found for this BookClub");
         }
         return assignments;
+    }
+
+    @Override
+    public List<BookClubAssignment> createBatchAssignments(BookClubAssignmentBatchDTO dto) {
+        if (dto.bookIds() == null || dto.bookIds().isEmpty()) {
+            throw new BadRequestException("Error: At least one book is required");
+        }
+
+        if (dto.frequency() == null || dto.frequency().isBlank()) {
+            throw new BadRequestException("Error: Frequency is required");
+        }
+
+        // calcula quantos dias dura cada livro
+        int dias = switch (dto.frequency().toUpperCase()) {
+            case "SEMANAL"   -> 7;
+            case "QUINZENAL" -> 15;
+            case "MENSAL"    -> 30;
+            default -> throw new BadRequestException("Error: Invalid frequency. Use SEMANAL, QUINZENAL or MENSAL");
+        };
+
+        List<BookClubAssignment> assignments = new ArrayList<>();
+        LocalDate startDate = LocalDate.now(); // seta data inicial para o dia da maquina
+
+        for (UUID bookId : dto.bookIds()) {
+            LocalDate finishDate = startDate.plusDays(dias);
+
+            BookClub club = new BookClub();
+            club.setIdBookClub(dto.clubId());
+
+            Book book = new Book();
+            book.setIdBook(bookId);
+
+            BookClubAssignment assignment = new BookClubAssignment();
+            assignment.setBookClub(club);
+            assignment.setBook(book);
+            assignment.setStartDate(startDate);
+            assignment.setFinishDate(finishDate);
+
+            assignments.add(bookClubAssignmentRepository.save(assignment));
+
+            startDate = finishDate.plusDays(1);
+        }
+        return assignments;
+    }
+
+    @Override
+    public BookClubAssignment addBookToClub(UUID clubId, UUID bookId) {
+        // busca o clube e sua frequência
+        BookClub club = bookClubRepository.findById(clubId)
+                .orElseThrow(() -> new BadRequestException("Error: BookClub not found"));
+
+        int dias = switch (club.getFrequency()) {
+            case "SEMANAL"   -> 7;
+            case "QUINZENAL" -> 15;
+            case "MENSAL"    -> 30;
+            default -> throw new BadRequestException("Error: Invalid frequency");
+        };
+
+        // busca o último assignment do clube para calcular a próxima data
+        LocalDate startDate = bookClubAssignmentRepository
+                .findTopByBookClub_IdBookClubOrderByFinishDateDesc(clubId)
+                .map(last -> last.getFinishDate().plusDays(1)) // ⬅️ começa após o último terminar
+                .orElse(LocalDate.now());                      // ⬅️ se não tiver nenhum, começa hoje
+
+        Book book = new Book();
+        book.setIdBook(bookId);
+
+        BookClubAssignment assignment = new BookClubAssignment();
+        assignment.setBookClub(club);
+        assignment.setBook(book);
+        assignment.setStartDate(startDate);
+        assignment.setFinishDate(startDate.plusDays(dias));
+
+        return bookClubAssignmentRepository.save(assignment);
     }
 }

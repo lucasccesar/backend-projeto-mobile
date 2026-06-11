@@ -1,6 +1,7 @@
 package br.com.bookly.controllers;
 
 import br.com.bookly.entities.BookClubAssignment;
+import br.com.bookly.entities.dtos.BookClubAssignmentBatchDTO;
 import br.com.bookly.entities.dtos.BookClubAssignmentDTO;
 import br.com.bookly.entities.dtos.ClubMessageDTO;
 import br.com.bookly.services.BookClubAssignmentService;
@@ -10,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -28,7 +30,7 @@ public class BookClubAssignmentController {
     @GetMapping("/{id}")
     public ResponseEntity<BookClubAssignmentDTO> findBookClubAssignmentById(@PathVariable UUID id) {
         BookClubAssignment bookClubAssignment = bookClubAssignmentService.findBookClubAssignmentById(id);
-            return ResponseEntity.ok(new BookClubAssignmentDTO(bookClubAssignment));
+        return ResponseEntity.ok(new BookClubAssignmentDTO(bookClubAssignment));
     }
 
     @GetMapping("/book/{bookId}")
@@ -46,19 +48,38 @@ public class BookClubAssignmentController {
     @PostMapping
     public ResponseEntity<BookClubAssignmentDTO> createBookClubAssignment(@RequestBody BookClubAssignment bookClubAssignment) {
         BookClubAssignment created = bookClubAssignmentService.createBookClubAssignment(bookClubAssignment);
-            BookClubAssignmentDTO dto = new BookClubAssignmentDTO(created);
-            return ResponseEntity.status(201).body(dto);
+        BookClubAssignmentDTO dto = new BookClubAssignmentDTO(created);
+        return ResponseEntity.status(201).body(dto);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<BookClubAssignmentDTO> updateBookClubAssignment(@PathVariable UUID id, @RequestBody BookClubAssignment bookClubAssignment) {
         BookClubAssignment updated = bookClubAssignmentService.updateBookClubAssignment(id, bookClubAssignment);
-            return ResponseEntity.ok(new BookClubAssignmentDTO(updated));
+        return ResponseEntity.ok(new BookClubAssignmentDTO(updated));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBookClubAssignmentById(@PathVariable UUID id) {
         boolean deleted = bookClubAssignmentService.deleteById(id);
-            return ResponseEntity.ok().build();
+        return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/batch")
+    public ResponseEntity<List<BookClubAssignmentDTO>> createBatchAssignments(
+            @RequestBody BookClubAssignmentBatchDTO dto) {
+        List<BookClubAssignment> created = bookClubAssignmentService.createBatchAssignments(dto);
+        List<BookClubAssignmentDTO> dtos = created.stream()
+                .map(BookClubAssignmentDTO::new)
+                .toList();
+        return ResponseEntity.status(201).body(dtos);
+    }
+
+    @PostMapping("/club/{clubId}/book/{bookId}")
+    public ResponseEntity<BookClubAssignmentDTO> addBookToClub(
+            @PathVariable UUID clubId,
+            @PathVariable UUID bookId) {
+        BookClubAssignment created = bookClubAssignmentService.addBookToClub(clubId, bookId);
+        return ResponseEntity.status(201).body(new BookClubAssignmentDTO(created));
+    }
+
 }

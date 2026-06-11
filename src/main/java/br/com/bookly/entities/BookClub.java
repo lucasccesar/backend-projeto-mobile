@@ -50,4 +50,7 @@ public class BookClub { // clube_do_livro
     @ManyToOne
     @JoinColumn(name = "id_criador")
     private Users creator;
+
+    @Column(name = "frequencia_de_livros")
+    private String frequency; // semanal, quinzenal, mensal
 }
