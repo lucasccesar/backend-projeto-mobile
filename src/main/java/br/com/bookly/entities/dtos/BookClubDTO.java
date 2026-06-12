@@ -10,20 +10,12 @@ import java.util.UUID;
 @Getter
 @Setter
 public class BookClubDTO {
-
     private UUID id;
     private String name;
     private String theme;
     private String description;
     private String frequency;
-
-    public BookClubDTO(UUID id, String name, String theme, String description, String frequency) {
-        this.id = id;
-        this.name = name;
-        this.theme = theme;
-        this.description = description;
-        this.frequency = frequency;
-    }
+    private UUID creatorId;
 
     public BookClubDTO(BookClub bookClub) {
         this.id = bookClub.getIdBookClub();
@@ -31,5 +23,8 @@ public class BookClubDTO {
         this.theme = bookClub.getTheme();
         this.description = bookClub.getDescription();
         this.frequency = bookClub.getFrequency();
+        this.creatorId = bookClub.getCreator() != null
+                ? bookClub.getCreator().getId()
+                : null;
     }
 }
