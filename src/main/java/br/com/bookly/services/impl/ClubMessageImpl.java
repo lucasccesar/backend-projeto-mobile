@@ -6,6 +6,7 @@ import br.com.bookly.exceptions.BadRequestException;
 import br.com.bookly.exceptions.InexistentClubMessageException;
 import br.com.bookly.exceptions.NotModifiedClubMessageException;
 import br.com.bookly.repositories.ClubMessageRepository;
+import br.com.bookly.repositories.ParticipantUserRepository;
 import br.com.bookly.services.ClubMessageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.crossstore.ChangeSetPersister;
@@ -23,6 +24,9 @@ public class ClubMessageImpl implements ClubMessageService {
 
     @Autowired
     ClubMessageRepository clubMessageRepository;
+
+    @Autowired
+    ParticipantUserRepository participantUserRepository;
 
     @Override
     public Page<ClubMessage> listClubMessage(Pageable pageable) {
@@ -72,6 +76,15 @@ public class ClubMessageImpl implements ClubMessageService {
 
         if (clubMessage.getClub() == null){
             throw new BadRequestException("Error: Club cannot be null");
+        }
+
+        boolean ehParticipante = participantUserRepository.existsByUser_IdAndClub_IdBookClub(
+                clubMessage.getUser().getId(),
+                clubMessage.getClub().getIdBookClub()
+        );
+
+        if (!ehParticipante) {
+            throw new BadRequestException("Error: User is not a participant of this club");
         }
 
         if(clubMessage.getMessageDate() == null){
