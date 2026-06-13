@@ -4,6 +4,7 @@ import br.com.bookly.entities.ParticipantUser;
 import br.com.bookly.exceptions.BadRequestException;
 import br.com.bookly.exceptions.ExistingParticipantUserException;
 import br.com.bookly.exceptions.InexistentParticipantUserException;
+import br.com.bookly.repositories.ClubMessageRepository;
 import br.com.bookly.repositories.ParticipantUserRepository;
 import br.com.bookly.services.ParticipantUserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,8 @@ public class ParticipantUserServiceImpl implements ParticipantUserService {
     @Autowired
     ParticipantUserRepository participantUserRepository;
 
+    @Autowired
+    ClubMessageRepository clubMessageRepository;
 
     @Override
     public ParticipantUser createParticipantUser(ParticipantUser participantUser) {
@@ -83,6 +86,13 @@ public class ParticipantUserServiceImpl implements ParticipantUserService {
         if(participantUserRepository.existsById(id) == false){
             throw new InexistentParticipantUserException("Error: Participant User Not Found");
         }
+
+        ParticipantUser participant = participantUserRepository.findById(id).orElseThrow();
+
+        clubMessageRepository.deleteByUser_IdAndClub_IdBookClub(
+                participant.getUser().getId(),
+                participant.getClub().getIdBookClub()
+        );
 
         participantUserRepository.deleteById(id);
         return true;

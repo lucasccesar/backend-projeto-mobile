@@ -16,4 +16,5 @@ public interface BookClubAssignmentRepository extends JpaRepository<BookClubAssi
     Page<BookClubAssignment> findByBookClub_IdBookClub(UUID bookClubId, Pageable pageable); //busca todos os livros de um clube
     boolean existsByBook_IdBookAndBookClub_IdBookClubAndStartDateAndFinishDate(UUID bookId, UUID bookClubId, LocalDate startDate, LocalDate finishDate);
     Optional<BookClubAssignment> findTopByBookClub_IdBookClubOrderByFinishDateDesc(UUID clubId);
+    boolean existsByBook_IdBookAndBookClub_IdBookClub(UUID bookId, UUID clubId);
 }

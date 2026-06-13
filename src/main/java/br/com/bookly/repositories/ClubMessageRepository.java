@@ -3,6 +3,7 @@ package br.com.bookly.repositories;
 import br.com.bookly.entities.ClubMessage;
 import br.com.bookly.entities.ParticipantUser;
 import jakarta.persistence.Entity;
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,4 +15,7 @@ import java.util.UUID;
 public interface ClubMessageRepository extends JpaRepository<ClubMessage, UUID> {
     Page<ClubMessage> findByClub_IdBookClub(UUID idClub, Pageable pageable);
     Page<ClubMessage> findByUser_Id(UUID idUser, Pageable pageable);
+
+    @Transactional
+    void deleteByUser_IdAndClub_IdBookClub(UUID userId, UUID clubId);
 }

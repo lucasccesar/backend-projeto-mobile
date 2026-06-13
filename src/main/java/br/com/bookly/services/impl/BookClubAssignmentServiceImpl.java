@@ -179,9 +179,14 @@ public class BookClubAssignmentServiceImpl implements BookClubAssignmentService 
 
     @Override
     public BookClubAssignment addBookToClub(UUID clubId, UUID bookId) {
-        // busca o clube e sua frequência
         BookClub club = bookClubRepository.findById(clubId)
                 .orElseThrow(() -> new BadRequestException("Error: BookClub not found"));
+
+        boolean jaExiste = bookClubAssignmentRepository
+                .existsByBook_IdBookAndBookClub_IdBookClub(bookId, clubId);
+        if (jaExiste) {
+            throw new ExistentBookClubAssignmentException("Error: Book already assigned to this club");
+        }
 
         int dias = switch (club.getFrequency()) {
             case "SEMANAL"   -> 7;
@@ -190,11 +195,10 @@ public class BookClubAssignmentServiceImpl implements BookClubAssignmentService 
             default -> throw new BadRequestException("Error: Invalid frequency");
         };
 
-        // busca o último assignment do clube para calcular a próxima data
         LocalDate startDate = bookClubAssignmentRepository
                 .findTopByBookClub_IdBookClubOrderByFinishDateDesc(clubId)
-                .map(last -> last.getFinishDate().plusDays(1)) // ⬅️ começa após o último terminar
-                .orElse(LocalDate.now());                      // ⬅️ se não tiver nenhum, começa hoje
+                .map(last -> last.getFinishDate().plusDays(1))
+                .orElse(LocalDate.now());
 
         Book book = new Book();
         book.setIdBook(bookId);
